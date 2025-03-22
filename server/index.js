@@ -1,0 +1,184 @@
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const cors = require("cors");
+const { default: axios } = require("axios");
+
+const app = express();
+const PORT = 5000;
+
+// File Paths
+const productsFilePath = path.join(__dirname, "utils/products.json");
+const usersFilePath = path.join(__dirname, "utils/users.json");
+const reviewsFilePath = path.join(__dirname, "utils/reviews.json");
+
+app.use(express.json());
+app.use(cors());
+
+// ========== Helper Functions ==========
+const readJSON = (filePath) => {
+    try {
+        return JSON.parse(fs.readFileSync(filePath, "utf8"));
+    } catch (error) {
+        console.error(`Error reading file: ${filePath}`, error);
+        return [];
+    }
+};
+
+const writeJSON = (filePath, data) => {
+    fs.writeFile(filePath, JSON.stringify(data, null, 2), "utf8", (err) => {
+        if (err) console.error(`Error writing to file: ${filePath}`, err);
+    });
+};
+
+// ========== USERS ==========
+// Login API
+app.post("/login", (req, res) => {
+    const { email, password } = req.body;
+    const users = readJSON(usersFilePath);
+
+    const user = users.find((u) => u.email === email && u.password === password);
+    if (!user) return res.status(401).json({ error: "Invalid credentials" });
+    console.log(user, "all")
+    res.json({ message: "Login successful", role: user.role, userId: user.id, username: user.name, userEmail: user.email });
+});
+
+// ========== PRODUCTS ==========
+// Get All Products
+app.get("/products", (req, res) => res.json(readJSON(productsFilePath)));
+
+// Get Single Product
+app.get("/product/:id", (req, res) => {
+    const products = readJSON(productsFilePath);
+    const product = products.find((p) => p.id === parseInt(req.params.id));
+    if (!product) return res.status(404).json({ error: "Product not found" });
+
+    res.json(product);
+});
+
+// Add New Product
+app.post("/products", (req, res) => {
+    let products = readJSON(productsFilePath);
+    const newProduct = { id: products.length + 1, ...req.body, reviews: [] };
+
+    products.push(newProduct);
+    writeJSON(productsFilePath, products);
+
+    res.json({ message: "Product added successfully", product: newProduct });
+});
+
+// Update Product
+app.put("/products/:id", (req, res) => {
+    let products = readJSON(productsFilePath);
+    const index = products.findIndex((p) => p.id === parseInt(req.params.id));
+
+    if (index === -1) return res.status(404).json({ error: "Product not found" });
+
+    products[index] = { ...products[index], ...req.body };
+    writeJSON(productsFilePath, products);
+
+    res.json({ message: "Product updated successfully", product: products[index] });
+});
+
+// Delete Product
+app.delete("/products/:id", (req, res) => {
+    let products = readJSON(productsFilePath);
+    products = products.filter((p) => p.id !== parseInt(req.params.id));
+
+    writeJSON(productsFilePath, products);
+    res.json({ message: "Product deleted successfully" });
+});
+
+// ========== REVIEWS ==========
+// Get Reviews for a Product
+app.get("/reviews/:productId", (req, res) => {
+    const productId = parseInt(req.params.productId);
+    const reviews = readJSON(reviewsFilePath);
+    const productReviews = reviews.filter((r) => r.productId === productId);
+
+    res.json(productReviews);
+});
+app.get("/reviews", async (req, res) => {
+    // const productId = parseInt(req.params.productId);
+    const reviews = readJSON(reviewsFilePath);
+    const productReviews = await analysis(reviews)
+
+    res.json(productReviews);
+});
+// Add Review (Now includes userId)
+app.post("/reviews", (req, res) => {
+    const { productId, userId, username, text } = req.body;
+    if (!productId || !userId || !username || !text) {
+        return res.status(400).json({ error: "All fields are required (productId, userId, username, text)" });
+    }
+
+    let reviews = readJSON(reviewsFilePath);
+    const newReview = { id: reviews.length + 1, productId, userId, username, text };
+
+    reviews.push(newReview);
+    writeJSON(reviewsFilePath, reviews);
+
+    res.json({ message: "Review added successfully", review: newReview });
+});
+async function analysis(question) {
+    return new Promise((resolve, reject) => {
+        let data = JSON.stringify(
+            {
+                "contents": [
+                    {
+                        "role": "user",
+                        "parts": [
+                            {
+                                "text": JSON.stringify(question)
+                            }
+                        ]
+                    }
+                ],
+                "systemInstruction": {
+                    "role": "user",
+                    "parts": [
+                        {
+                            "text": "You are an AI assistant. Your task is to analyze eCommerce product reviews and identify the sentiment (positive, neutral, or negative). Respond strictly in JSON format as per the example:                              [                           {                               \"id\": 1,                               \"productId\": \"2\",                               \"userId\": 2,                               \"username\": \"User\",                               \"text\": \"nice\",                               \"sentiment\": \"positive\"                           },                           {                               \"id\": 2,                               \"productId\": \"1\",                               \"userId\": 2,                               \"username\": \"User\",                               \"text\": \"Nice\",                               \"sentiment\": \"positive\"                           },                           {                               \"id\": 3,                               \"productId\": \"1\",                               \"userId\": 3,                               \"username\": \"User2\",                               \"text\": \"Not bad\",                               \"sentiment\": \"neutral\"                           }                       ]"
+                        }
+                    ]
+                },
+                "generationConfig": {
+                    "temperature": 1,
+                    "topK": 40,
+                    "topP": 0.95,
+                    "maxOutputTokens": 8192,
+                    "responseMimeType": "application/json"
+                }
+            });
+
+        let config = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyC_yBhja8pLtvI887aE2z32JjA35w4J2Vo',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data: data
+        };
+
+        axios.request(config)
+            .then((response) => {
+                console.log(JSON.stringify(response.data));
+                resolve(response.data?.candidates[0]?.content.parts[0]?.text)
+            })
+            .catch((error) => {
+                console.log(error);
+                reject(error)
+            });
+    })
+
+
+
+
+
+}
+
+// Start Server
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
