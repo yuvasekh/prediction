@@ -3,6 +3,7 @@ import axios from "axios";
 import { Tab } from "@headlessui/react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend,
+  LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from "recharts";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A28DFF"];
@@ -38,10 +39,18 @@ const AdminReviewDashboard = () => {
     return acc;
   }, {});
 
-  const pieChartData = Object.keys(sentimentCountByProduct[selectedProduct] || {}).map((sentiment, index) => ({
-    name: sentiment.charAt(0).toUpperCase() + sentiment.slice(1),
-    value: sentimentCountByProduct[selectedProduct][sentiment],
-    color: COLORS[index % COLORS.length],
+  const lineChartData = Object.keys(sentimentCountByProduct).map((productId) => ({
+    productId: `P${productId}`,
+    positive: sentimentCountByProduct[productId]?.positive || 0,
+    neutral: sentimentCountByProduct[productId]?.neutral || 0,
+    negative: sentimentCountByProduct[productId]?.negative || 0,
+  }));
+
+  const radarChartData = Object.keys(sentimentCountByProduct).map((productId) => ({
+    subject: `P${productId}`,
+    Positive: sentimentCountByProduct[productId]?.positive || 0,
+    Neutral: sentimentCountByProduct[productId]?.neutral || 0,
+    Negative: sentimentCountByProduct[productId]?.negative || 0,
   }));
 
   return (
@@ -55,7 +64,7 @@ const AdminReviewDashboard = () => {
       ) : (
         <Tab.Group>
           <Tab.List className="flex justify-center space-x-4 mb-6">
-            {['Pie Chart by Product', 'Search Reviews'].map((tab, index) => (
+            {['Pie Chart by Product', 'Search Reviews', 'Line Chart', 'Radar Chart'].map((tab, index) => (
               <Tab key={index} className={({ selected }) => selected ? "px-4 py-2 bg-blue-600 text-white rounded-lg" : "px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"}>{tab}</Tab>
             ))}
           </Tab.List>
@@ -63,17 +72,10 @@ const AdminReviewDashboard = () => {
           <Tab.Panels>
             {/* Pie Chart Tab */}
             <Tab.Panel className="flex flex-col items-center">
-              <label className="mb-2 text-lg font-medium">Select Product:</label>
-              <select className="mb-4 px-4 py-2 border rounded-lg" value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)}>
-                <option value="all">All Products</option>
-                {Object.keys(sentimentCountByProduct).map((productId) => (
-                  <option key={productId} value={productId}>Product {productId}</option>
-                ))}
-              </select>
               <PieChart width={400} height={400}>
-                <Pie data={pieChartData} cx="50%" cy="50%" outerRadius={100} dataKey="value">
-                  {pieChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                <Pie data={lineChartData} cx="50%" cy="50%" outerRadius={100} dataKey="positive">
+                  {lineChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Legend />
@@ -83,19 +85,36 @@ const AdminReviewDashboard = () => {
 
             {/* Search Review Tab */}
             <Tab.Panel className="flex flex-col items-center">
-              <div className="flex justify-center items-center gap-3 mb-6">
-                <input type="number" placeholder="Enter Review ID" value={searchId} onChange={(e) => setSearchId(e.target.value)} className="border px-4 py-2 rounded-lg shadow-sm focus:ring focus:ring-blue-300" />
-                <button onClick={handleSearch} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Search</button>
-              </div>
+              <input type="number" placeholder="Enter Review ID" value={searchId} onChange={(e) => setSearchId(e.target.value)} className="border px-4 py-2 rounded-lg shadow-sm focus:ring focus:ring-blue-300" />
+              <button onClick={handleSearch} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Search</button>
               {searchResult && (
-                <div className="text-center text-lg mt-3">
-                  {typeof searchResult === "string" ? (
-                    <p className="text-red-500">{searchResult}</p>
-                  ) : (
-                    <p className="font-medium">Review: <span className="text-gray-700">{searchResult.text}</span> {searchResult.sentiment === "positive" ? "😀" : "😞"}</p>
-                  )}
-                </div>
+                <p className="font-medium">Review: {searchResult.text} {searchResult.sentiment === "positive" ? "😀" : "😞"}</p>
               )}
+            </Tab.Panel>
+
+            {/* Line Chart Tab */}
+            <Tab.Panel className="flex justify-center">
+              <LineChart width={500} height={300} data={lineChartData}>
+                <XAxis dataKey="productId" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="positive" stroke="#00C49F" />
+                <Line type="monotone" dataKey="neutral" stroke="#FFBB28" />
+                <Line type="monotone" dataKey="negative" stroke="#FF8042" />
+              </LineChart>
+            </Tab.Panel>
+
+            {/* Radar Chart Tab */}
+            <Tab.Panel className="flex justify-center">
+              <RadarChart outerRadius={90} width={500} height={400} data={radarChartData}>
+                <PolarGrid />
+                <PolarAngleAxis dataKey="subject" />
+                <PolarRadiusAxis />
+                <Radar name="Positive" dataKey="Positive" stroke="#00C49F" fill="#00C49F" fillOpacity={0.6} />
+                <Radar name="Neutral" dataKey="Neutral" stroke="#FFBB28" fill="#FFBB28" fillOpacity={0.6} />
+                <Radar name="Negative" dataKey="Negative" stroke="#FF8042" fill="#FF8042" fillOpacity={0.6} />
+                <Legend />
+              </RadarChart>
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>
