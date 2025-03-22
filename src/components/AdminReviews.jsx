@@ -54,7 +54,7 @@ const AdminReviewDashboard = () => {
   }));
 
   return (
-    <div className="container mx-auto p-6 bg-gray-100 min-h-screen">
+    <div className="container mx-auto p-6 bg-gray-100 min-h-screen mt-[20] w-[100vw]">
       <h2 className="text-4xl font-bold text-center text-gray-800 mb-6">📊 Admin Review Dashboard</h2>
 
       {loading ? (
@@ -86,9 +86,9 @@ const AdminReviewDashboard = () => {
             {/* Search Review Tab */}
             <Tab.Panel className="flex flex-col items-center">
               <input type="number" placeholder="Enter Review ID" value={searchId} onChange={(e) => setSearchId(e.target.value)} className="border px-4 py-2 rounded-lg shadow-sm focus:ring focus:ring-blue-300" />
-              <button onClick={handleSearch} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Search</button>
+              <button onClick={handleSearch} className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition mt-[12]">Search</button>
               {searchResult && (
-                <p className="font-medium">Review: {searchResult.text} {searchResult.sentiment === "positive" ? "😀" : "😞"}</p>
+                <p className="font-medium text-4xl">Review: {searchResult.text} {searchResult.sentiment === "positive" ? "😀" : "😞"}</p>
               )}
             </Tab.Panel>
 
