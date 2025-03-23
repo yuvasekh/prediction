@@ -42,7 +42,11 @@ const AdminReviewDashboard = () => {
 
   // Get unique product IDs
   const productIds = [...new Set(reviews.map((review) => review.productId))];
-
+  const uniqueProducts = [
+    ...new Map(reviews.map((review) => [review.productId, { productId: review.productId, productName: review.productName }])).values()
+  ];
+  
+  console.log(uniqueProducts,"yuva")
   // Filter reviews by selected product
   const filterReviewsByProduct = (productId) => {
     return reviews.filter((review) => review.productId === productId);
@@ -66,26 +70,6 @@ const AdminReviewDashboard = () => {
       { name: "Negative", value: sentimentCount.negative || 0 },
     ];
   };
-
-  // Generate AI-based suggestion
-  const generateSuggestion = (productId) => {
-    const sentimentCount = calculateSentimentCount(productId);
-    const positiveCount = sentimentCount.positive || 0;
-    const neutralCount = sentimentCount.neutral || 0;
-    const negativeCount = sentimentCount.negative || 0;
-
-    if (positiveCount > negativeCount && positiveCount > neutralCount) {
-      return `Product ${productId} is performing well. Consider increasing stock or promoting it further.`;
-    } else if (negativeCount > positiveCount && negativeCount > neutralCount) {
-      return `Product ${productId} has negative feedback. Consider improving the product or addressing customer concerns.`;
-    } else if (neutralCount > positiveCount && neutralCount > negativeCount) {
-      return `Product ${productId} has mostly neutral feedback. Consider gathering more reviews or analyzing further.`;
-    } else {
-      return `Product ${productId} has mixed feedback. Consider gathering more reviews or analyzing further.`;
-    }
-  };
-
-
   return (
     <div className="container mx-auto p-6 bg-gray-100 min-h-screen mt-[20] w-[100vw]">
       <h2 className="text-4xl font-bold text-center text-gray-800 mb-6">📊 Admin Review Dashboard</h2>
@@ -105,7 +89,7 @@ const AdminReviewDashboard = () => {
           <Tab.Panels>
             {/* Pie Chart Tab */}
             <Tab.Panel className="flex flex-col items-center">
-              <select
+              {/* <select
                 value={selectedProductPie}
                 onChange={(e) => setSelectedProductPie(e.target.value)}
                 className="border px-4 py-2 rounded-lg shadow-sm focus:ring focus:ring-blue-300 mb-4"
@@ -113,7 +97,18 @@ const AdminReviewDashboard = () => {
                 {productIds.map((productId) => (
                   <option key={productId} value={productId}>Product {productId}</option>
                 ))}
-              </select>
+              </select> */}
+     <select
+  value={selectedProductPie}
+  onChange={(e) => setSelectedProductPie(e.target.value)}
+  className="border px-4 py-2 rounded-lg shadow-sm focus:ring focus:ring-blue-300 mb-4"
+>
+  {uniqueProducts.map(({ productId, productName }) => (
+    <option key={productId} value={productId}>{productName}</option>
+  ))}
+</select>
+
+
               <PieChart width={400} height={400}>
                 <Pie data={formatChartData(selectedProductPie)} cx="50%" cy="50%" outerRadius={100} dataKey="value">
                   {formatChartData(selectedProductPie).map((entry, index) => (
@@ -127,15 +122,16 @@ const AdminReviewDashboard = () => {
 
             {/* Bar Chart Tab */}
             <Tab.Panel className="flex flex-col items-center">
-              <select
-                value={selectedProductBar}
-                onChange={(e) => setSelectedProductBar(e.target.value)}
-                className="border px-4 py-2 rounded-lg shadow-sm focus:ring focus:ring-blue-300 mb-4"
-              >
-                {productIds.map((productId) => (
-                  <option key={productId} value={productId}>Product {productId}</option>
-                ))}
-              </select>
+            <select
+  value={selectedProductBar}
+  onChange={(e) => setSelectedProductBar(e.target.value)}
+  className="border px-4 py-2 rounded-lg shadow-sm focus:ring focus:ring-blue-300 mb-4"
+>
+  {uniqueProducts.map(({ productId, productName }) => (
+    <option key={productId} value={productId}>{productName}</option>
+  ))}
+</select>
+
               <BarChart width={500} height={300} data={formatChartData(selectedProductBar)}>
                 <XAxis dataKey="name" />
                 <YAxis />
@@ -146,15 +142,17 @@ const AdminReviewDashboard = () => {
 
             {/* Line Chart Tab */}
             <Tab.Panel className="flex flex-col items-center">
-              <select
-                value={selectedProductLine}
-                onChange={(e) => setSelectedProductLine(e.target.value)}
-                className="border px-4 py-2 rounded-lg shadow-sm focus:ring focus:ring-blue-300 mb-4"
-              >
-                {productIds.map((productId) => (
-                  <option key={productId} value={productId}>Product {productId}</option>
-                ))}
-              </select>
+            
+            <select
+  value={selectedProductLine}
+  onChange={(e) => setSelectedProductLine(e.target.value)}
+  className="border px-4 py-2 rounded-lg shadow-sm focus:ring focus:ring-blue-300 mb-4"
+>
+  {uniqueProducts.map(({ productId, productName }) => (
+    <option key={productId} value={productId}>{productName}</option>
+  ))}
+</select>
+
               <LineChart width={500} height={300} data={formatChartData(selectedProductLine)}>
                 <XAxis dataKey="name" />
                 <YAxis />
@@ -165,15 +163,16 @@ const AdminReviewDashboard = () => {
 
             {/* Radar Chart Tab */}
             <Tab.Panel className="flex flex-col items-center">
-              <select
-                value={selectedProductRadar}
-                onChange={(e) => setSelectedProductRadar(e.target.value)}
-                className="border px-4 py-2 rounded-lg shadow-sm focus:ring focus:ring-blue-300 mb-4"
-              >
-                {productIds.map((productId) => (
-                  <option key={productId} value={productId}>Product {productId}</option>
-                ))}
-              </select>
+            <select
+  value={selectedProductRadar}
+  onChange={(e) => setSelectedProductRadar(e.target.value)}
+  className="border px-4 py-2 rounded-lg shadow-sm focus:ring focus:ring-blue-300 mb-4"
+>
+  {uniqueProducts.map(({ productId, productName }) => (
+    <option key={productId} value={productId}>{productName}</option>
+  ))}
+</select>
+
               <RadarChart outerRadius={90} width={500} height={400} data={formatChartData(selectedProductRadar)}>
                 <PolarGrid />
                 <PolarAngleAxis dataKey="name" />

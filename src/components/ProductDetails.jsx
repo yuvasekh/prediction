@@ -28,14 +28,14 @@ const ProductDetails = () => {
       setUsername(userData.username);
     }
   }, [id]);
-
+  console.log(product,"aa")
   const handleReviewSubmit = () => {
     if (!userId || !username) {
       alert("You must be logged in to submit a review.");
       return;
     }
 
-    axios.post("http://localhost:5000/reviews", { productId: id, userId, username, text: review })
+    axios.post("http://localhost:5000/reviews", { productId: id, userId, username, text: review,productName:product.name })
       .then((res) => {
         setReviews([...reviews, res.data.review]);
         setReview("");

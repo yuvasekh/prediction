@@ -114,13 +114,13 @@ app.get("/suggestion", async (req, res) => {
 });
 // Add Review (Now includes userId)
 app.post("/reviews", (req, res) => {
-    const { productId, userId, username, text } = req.body;
+    const { productId, userId, username, text,productName } = req.body;
     if (!productId || !userId || !username || !text) {
         return res.status(400).json({ error: "All fields are required (productId, userId, username, text)" });
     }
 
     let reviews = readJSON(reviewsFilePath);
-    const newReview = { id: reviews.length + 1, productId, userId, username, text };
+    const newReview = { id: reviews.length + 1, productId, userId, username, text,productName };
 
     reviews.push(newReview);
     writeJSON(reviewsFilePath, reviews);
@@ -146,7 +146,7 @@ async function analysis(question) {
                     "role": "user",
                     "parts": [
                         {
-                            "text": "You are an AI assistant. Your task is to analyze eCommerce product reviews and identify the sentiment (positive, neutral, or negative). Respond strictly in JSON format as per the example:                              [                           {                               \"id\": 1,                               \"productId\": \"2\",                               \"userId\": 2,                               \"username\": \"User\",                               \"text\": \"nice\",                               \"sentiment\": \"positive\"                           },                           {                               \"id\": 2,                               \"productId\": \"1\",                               \"userId\": 2,                               \"username\": \"User\",                               \"text\": \"Nice\",                               \"sentiment\": \"positive\"                           },                           {                               \"id\": 3,                               \"productId\": \"1\",                               \"userId\": 3,                               \"username\": \"User2\",                               \"text\": \"Not bad\",                               \"sentiment\": \"neutral\"                           }                       ]"
+                            "text": "You are an AI assistant. Your task is to analyze eCommerce product reviews and identify the sentiment (positive, neutral, or negative). Respond strictly in JSON format as per the example:                              [                           {                               \"id\": 1,                               \"productId\": \"2\",     \"productName\":\"test\" ,\"2\",                               \"userId\": 2,                               \"username\": \"User\",                               \"text\": \"nice\",                               \"sentiment\": \"positive\"                           },                           {                               \"id\": 2,                               \"productId\": \"1\",                               \"userId\": 2,                               \"username\": \"User\",                               \"text\": \"Nice\",                               \"sentiment\": \"positive\"                           },                           {                               \"id\": 3,                               \"productId\": \"1\",                               \"userId\": 3,                               \"username\": \"User2\",    \"productName\":\"test\" ,                            \"text\": \"Not bad\",                               \"sentiment\": \"neutral\"                           }                       ]"
                         }
                     ]
                 },
