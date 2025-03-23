@@ -105,6 +105,13 @@ app.get("/reviews", async (req, res) => {
 
     res.json(productReviews);
 });
+app.get("/suggestion", async (req, res) => {
+    // const productId = parseInt(req.params.productId);
+    const reviews = readJSON(reviewsFilePath);
+    const productReviews = await Suggestionanalysis(reviews)
+
+    res.json(productReviews);
+});
 // Add Review (Now includes userId)
 app.post("/reviews", (req, res) => {
     const { productId, userId, username, text } = req.body;
@@ -120,6 +127,7 @@ app.post("/reviews", (req, res) => {
 
     res.json({ message: "Review added successfully", review: newReview });
 });
+
 async function analysis(question) {
     return new Promise((resolve, reject) => {
         let data = JSON.stringify(
@@ -177,7 +185,63 @@ async function analysis(question) {
 
 
 }
+async function Suggestionanalysis(question) {
+    return new Promise((resolve, reject) => {
+        let data = JSON.stringify(
+            {
+                "contents": [
+                    {
+                        "role": "user",
+                        "parts": [
+                            {
+                                "text": JSON.stringify(question)
+                            }
+                        ]
+                    }
+                ],
+                "systemInstruction": {
+                    "role": "user",
+                    "parts": [
+                        {
+                            "text": "You are an AI assistant. Your task is to analyze eCommerce product reviews and Give the product Improvement suggesttion to improve sales in the json format only:           [{\"productId\":\"1\",\"suggestion\":[\"Based on feedback, the product is generally perceived as 'Nice' or 'Not bad'.  Further investigation is needed to determine specific areas for improvement. Consider gathering more detailed feedback using surveys or questionnaires to understand what users like and dislike about the product.\"]},{\"productId\":\"2\",\"suggestion\":[\"The feedback for this product is mixed, with both 'nice' and 'worst' ratings.  This indicates inconsistency in the product or potentially varying expectations.  Investigate the reasons behind the negative feedback to identify specific quality issues or areas where the product fails to meet user needs.  Consider segmenting users to understand if certain user groups have consistently negative experiences.\"]},{\"productId\":\"5\",\"suggestion\":[\"The feedback for this product is highly varied, ranging from 'Nice product' and 'good' to 'Worst' and 'excellent'. This suggests a lack of consistency in product quality or user experience. A thorough review of the manufacturing process and quality control procedures is recommended. Gather additional user data to identify the factors contributing to the wide range of opinions. Analyze if 'Worst' feedback coincides with a specific batch or period.\"]}]"
+                        }
+                    ]
+                },
+                "generationConfig": {
+                    "temperature": 1,
+                    "topK": 40,
+                    "topP": 0.95,
+                    "maxOutputTokens": 8192,
+                    "responseMimeType": "application/json"
+                }
+            });
 
+        let config = {
+            method: 'post',
+            maxBodyLength: Infinity,
+            url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyC_yBhja8pLtvI887aE2z32JjA35w4J2Vo',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data: data
+        };
+
+        axios.request(config)
+            .then((response) => {
+                console.log(JSON.stringify(response.data));
+                resolve(response.data?.candidates[0]?.content.parts[0]?.text)
+            })
+            .catch((error) => {
+                console.log(error);
+                reject(error)
+            });
+    })
+
+
+
+
+
+}
 // Start Server
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
