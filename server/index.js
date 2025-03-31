@@ -55,6 +55,33 @@ app.get("/product/:id", (req, res) => {
 
     res.json(product);
 });
+// Get User Profile & Reviews
+app.get("/user/:id", (req, res) => {
+    const userId = parseInt(req.params.id);
+    const users = readJSON(usersFilePath);
+    const reviews = readJSON(reviewsFilePath);
+
+    const user = users.find((u) => u.id === userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Fetch reviews written by the user
+    const userReviews = reviews.filter((r) => r.userId === userId);
+
+    res.json({ user, reviews: userReviews });
+});
+app.get("/reviews/:id", (req, res) => {
+    const userId = parseInt(req.params.id);
+    const users = readJSON(usersFilePath);
+    const reviews = readJSON(reviewsFilePath);
+
+    const user = users.find((u) => u.id === userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Fetch reviews written by the user
+    const userReviews = reviews.filter((r) => r.userId === userId);
+
+    res.json({ user, reviews: userReviews });
+});
 
 // Add New Product
 app.post("/products", (req, res) => {
@@ -105,7 +132,7 @@ app.get("/reviews", async (req, res) => {
 
     res.json(productReviews);
 });
-app.get("/suggestion", async (req, res) => {
+app.get("/api/upload", async (req, res) => {
     // const productId = parseInt(req.params.productId);
     const reviews = readJSON(reviewsFilePath);
     const productReviews = await Suggestionanalysis(reviews)
@@ -146,7 +173,7 @@ async function analysis(question) {
                     "role": "user",
                     "parts": [
                         {
-                            "text": "You are an AI assistant. Your task is to analyze eCommerce product reviews and identify the sentiment (positive, neutral, or negative). Respond strictly in JSON format as per the example:                              [                           {                               \"id\": 1,                               \"productId\": \"2\",     \"productName\":\"test\" ,\"2\",                               \"userId\": 2,                               \"username\": \"User\",                               \"text\": \"nice\",                               \"sentiment\": \"positive\"                           },                           {                               \"id\": 2,                               \"productId\": \"1\",                               \"userId\": 2,                               \"username\": \"User\",                               \"text\": \"Nice\",                               \"sentiment\": \"positive\"                           },                           {                               \"id\": 3,                               \"productId\": \"1\",                               \"userId\": 3,                               \"username\": \"User2\",    \"productName\":\"test\" ,                            \"text\": \"Not bad\",                               \"sentiment\": \"neutral\"                           }                       ]"
+                            "text": "You are an AI assistant. Your task is to analyze eCommerce product reviews and identify the sentiment (positive, neutral, or negative). Respond strictly in JSON format as per the example:                              [                           {                               \"id\": 1,                               \"productId\": \"2\",     \"productName\":\"test\" \"2\",                               \"userId\": 2,                               \"username\": \"User\",                               \"text\": \"nice\",                               \"sentiment\": \"positive\"                           },                           {                               \"id\": 2,                               \"productId\": \"1\",                               \"userId\": 2,                               \"username\": \"User\",                               \"text\": \"Nice\",                               \"sentiment\": \"positive\"                           },                           {                               \"id\": 3,                               \"productId\": \"1\",                               \"userId\": 3,                               \"username\": \"User2\",    \"productName\":\"test\"                             \"text\": \"Not bad\",                               \"sentiment\": \"neutral\"                           }                       ]"
                         }
                     ]
                 },
@@ -162,7 +189,7 @@ async function analysis(question) {
         let config = {
             method: 'post',
             maxBodyLength: Infinity,
-            url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyC_yBhja8pLtvI887aE2z32JjA35w4J2Vo',
+            url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCXB3E5EVsXKN7JLOAba_VyWmnHZALEZyI',
             headers: {
                 'Content-Type': 'application/json'
             },
@@ -219,7 +246,7 @@ async function Suggestionanalysis(question) {
         let config = {
             method: 'post',
             maxBodyLength: Infinity,
-            url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyC_yBhja8pLtvI887aE2z32JjA35w4J2Vo',
+            url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyCXB3E5EVsXKN7JLOAba_VyWmnHZALEZyI',
             headers: {
                 'Content-Type': 'application/json'
             },
