@@ -69,6 +69,13 @@ app.get("/user/:id", (req, res) => {
 
     res.json({ user, reviews: userReviews });
 });
+app.get("/users", (req, res) => {
+    const userId = parseInt(req.params.id);
+    const users = readJSON(usersFilePath);
+    // const reviews = readJSON(reviewsFilePath);
+
+    res.json({ users });
+});
 app.get("/reviews/:id", (req, res) => {
     const userId = parseInt(req.params.id);
     const users = readJSON(usersFilePath);

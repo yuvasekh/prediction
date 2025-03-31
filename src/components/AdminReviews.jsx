@@ -21,20 +21,32 @@ const AdminReviewDashboard = () => {
   const [searchId, setSearchId] = useState("");
   const [searchResult, setSearchResult] = useState(null);
   const [suggestion, setSuggestion] = useState("");
-
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [users, setUsers] = useState([]);
   useEffect(() => {
     axios.get("http://localhost:5000/reviews")
       .then((res) => {
-        const parsedData = JSON.parse(res.data);
-        setReviews(parsedData);
+        setReviews(JSON.parse(res.data));
         setLoading(false);
       })
       .catch((err) => {
         console.error(err);
         setLoading(false);
       });
-  }, []);
 
+    axios.get("http://localhost:5000/users")
+      .then((res) => {
+        console.log(res.data.users,"yuva")
+        setUsers(res.data.users);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, []);
+  const getReviewsByUser = (userId) => {
+    return reviews.filter((review) => review.userId === userId);
+  };
+  
   const handleSearch = () => {
     const foundReview = reviews.find((review) => review.id === parseInt(searchId, 10));
     setSearchResult(foundReview || "No review found");
@@ -71,7 +83,7 @@ const AdminReviewDashboard = () => {
     ];
   };
   return (
-    <div className="container mx-auto p-6 bg-gray-100 min-h-screen mt-[20] w-[100vw]">
+    <div className="container  p-6 bg-gray-100 min-h-screen mt-[20] w-[100vw]">
       <h2 className="text-4xl font-bold text-center text-gray-800 mb-6">📊 Admin Review Dashboard</h2>
 
       {loading ? (
@@ -81,7 +93,7 @@ const AdminReviewDashboard = () => {
       ) : (
         <Tab.Group>
           <Tab.List className="flex justify-center space-x-4 mb-6">
-            {['Pie Chart', 'Bar Chart', 'Line Chart', 'Radar Chart', 'Search Reviews', 'AI Suggestions'].map((tab, index) => (
+            {['Pie Chart', 'Bar Chart', 'Line Chart', 'Radar Chart', 'Search Reviews', 'AI Suggestions','Users'].map((tab, index) => (
               <Tab key={index} className={({ selected }) => selected ? "px-4 py-2 bg-blue-600 text-white rounded-lg" : "px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"}>{tab}</Tab>
             ))}
           </Tab.List>
@@ -119,7 +131,7 @@ const AdminReviewDashboard = () => {
                 <Tooltip />
               </PieChart>
             </Tab.Panel>
-
+    
             {/* Bar Chart Tab */}
             <Tab.Panel className="flex flex-col items-center">
             <select
@@ -247,6 +259,52 @@ const AdminReviewDashboard = () => {
     </div>
   )}
 </Tab.Panel>
+
+
+            {/* Users List Tab */}
+            <Tab.Panel className="flex flex-col items-center">
+              <h3 className="text-2xl font-bold mb-4">Users List</h3>
+              <table className="min-w-full bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {users.map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setSelectedUser(user.id)}>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{user.id}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">{user.name}</td>
+                      <td className="px-6 py-4 text-sm text-gray-700">{user.email}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {selectedUser && (
+                <div className="mt-6 w-full max-w-4xl">
+                  <h3 className="text-xl font-bold mb-4">Reviews by User {selectedUser}</h3>
+                  <table className="min-w-full bg-white border border-gray-200 shadow-sm rounded-lg overflow-hidden">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Review</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sentiment</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {getReviewsByUser(selectedUser).map((review, index) => (
+                        <tr key={index} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 text-sm text-gray-700">{review.text}</td>
+                          <td className="px-6 py-4 text-sm text-gray-700">{review.sentiment}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>
       )}
