@@ -146,6 +146,13 @@ app.get("/api/upload", async (req, res) => {
 
     res.json(productReviews);
 });
+app.get("/suggestion", async (req, res) => {
+    // const productId = parseInt(req.params.productId);
+    const reviews = readJSON(reviewsFilePath);
+    const productReviews = await Suggestionanalysis(reviews)
+
+    res.json(productReviews);
+});
 // Add Review (Now includes userId)
 app.post("/reviews", (req, res) => {
     const { productId, userId, username, text,productName } = req.body;
